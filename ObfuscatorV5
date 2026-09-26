@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lua Obfuscator</title>
+    <style>
+        /* ================= VARIABEL WARNA ================= */
+        :root {
+            --bg: #08080c;
+            --card: #12121a;
+            --border: #2a2a3a;
+            --text: #ffffff;
+            --sub: #8888aa;
+            --cyan: #00d4ff;
+            --purple: #9d4edd;
+            --red: #ff3333;
+            --success: #00ff88;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            background-image: radial-gradient(circle at 50% 0%, rgba(157, 78, 221, 0.12) 0%, transparent 50%);
+        }
+
+        .container {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.05);
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .container.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================= LAYAR 1: ACCESS DENIED ================= */
+        .icon-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .icon-warning {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--red);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--red);
+            font-size: 30px;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 51, 51, 0.2); }
+            50% { box-shadow: 0 0 22px rgba(255, 51, 51, 0.6); }
+        }
+
+        .denied-title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .denied-subtitle {
+            text-align: center;
+            color: var(--sub);
+            font-size: 13px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .protected-box {
+            background-color: #0a0a0f;
+            border: 1px solid #1a1a2a;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .protected-header {
+            font-size: 11px;
+            color: var(--cyan);
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .protected-header .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-red { background-color: var(--red); }
+        .dot-blue { background-color: var(--cyan); }
+
+        .protected-text {
+            font-size: 12px;
+            color: var(--sub);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .btn-denied {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(255, 51, 51, 0.08);
+            border: 1px solid var(--red);
+            border-radius: 8px;
+            color: var(--red);
+            font-size: 12px;
+            font-weight: 600;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: default;
+        }
+
+        .btn-obfuscate-link {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.08), rgba(157, 78, 221, 0.08));
+            border: 1px solid var(--purple);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-obfuscate-link:hover {
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.18), rgba(157, 78, 221, 0.18));
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 25px;
+            color: var(--sub);
+        }
+
+        .footer-text span {
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        /* ================= LAYAR 2: LOGIN ================= */
+        h1.login-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: var(--sub);
+            font-size: 14px;
+            margin-bottom: 25px;
+            margin-top: 0;
+        }
+
+        .access-denied-badge {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 51, 51, 0.1);
+            border: 1px solid var(--red);
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            background-color: #0a0a0f;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--cyan); }
+        input::placeholder { color: #555566; }
+
+        button.login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button.login-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        /* ================= LAYAR 3: OBFUSCATOR (MERAH) ================= */
+        .title-red {
+            color: var(--red);
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.3;
+            margin-bottom: 5px;
+            margin-top: 0;
+        }
+
+        .title-red span {
+            font-size: 16px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .subtitle-red {
+            color: var(--red);
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+            margin-top: 0;
+            font-weight: 600;
+        }
+
+        .instruction {
+            text-align: center;
+            color: var(--sub);
+            font-size: 13px;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        .loadstring-box {
+            background-color: #0a0a0f;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--red);
+            word-break: break-all;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.6;
+            user-select: all;
+        }
+
+        button.btn-copy {
+            width: 100%;
+            padding: 15px;
+            background-color: #ffffff;
+            color: var(--red);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-bottom: 10px;
+        }
+
+        button.btn-copy:hover { background-color: #e0e0e0; }
+        button.btn-copy:active { transform: scale(0.98); }
+
+        button.btn-executor {
+            width: 100%;
+            padding: 15px;
+            background-color: #2a2a3a;
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button.btn-executor:hover { background-color: #3a3a4a; }
+        button.btn-executor:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <!-- ================= LAYAR 1: ACCESS DENIED ================= -->
+    <div class="container active" id="screen-denied">
+        <div class="icon-container">
+            <div class="icon-warning">⚠️</div>
+        </div>
+        <div class="denied-title">Access Denied</div>
+        <div class="denied-subtitle">
+            This script is protected and cannot be viewed or copied from a browser.
+        </div>
+
+        <div class="protected-box">
+            <div class="protected-header">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-blue"></span>
+                PROTECTED CONTENTS
+            </div>
+            <div class="protected-text">
+                Accessing this is difficult; it requires a username and password. Access is blocked by Browser Obfuscator V5. Please do not skid this..
+            </div>
+
+            <div class="btn-denied">
+                <span>⛔</span> Browser access is not allowed
+            </div>
+
+            <div class="btn-obfuscate-link" onclick="showLogin()">
+                <span>🔒</span> Lua Script Obfuscator V5: If there is an element requiring a click, the necessary username and password must be provided.
+            </div>
+        </div>
+
+        <div class="footer-text">
+            encrypt x<br>
+            Protected by: <span>Pynon</span>
+        </div>
+    </div>
+
+    <!-- ================= LAYAR 2: LOGIN ================= -->
+    <div class="container" id="screen-login">
+        <h1 class="login-title">ACCSES BLOCKED ⚠️ ,Obfuscator V5</h1>
+        <p class="login-subtitle">Secure Access</p>
+
+        <div class="access-denied-badge">
+            <span>⛔</span> ACCESS DITOLAK
+        </div>
+
+        <label for="username">Nama</label>
+        <input type="text" id="username" placeholder="Masukkan nama" autocomplete="off">
+
+        <label for="password">Sandi</label>
+        <input type="password" id="password" placeholder="Masukkan sandi">
+
+        <button class="login-btn" onclick="handleLogin()">MASUK</button>
+    </div>
+
+    <!-- ================= LAYAR 3: OBFUSCATOR ================= -->
+    <div class="container" id="screen-obfuscator">
+        <h1 class="title-red">
+            Obfuscator<br>Lua<br><span>By : Pynon</span>
+        </h1>
+        <p class="subtitle-red">loadstring Ori</p>
+
+        <p class="instruction">Klik "Salin Url" lalu paste di executor kamu</p>
+
+        <div class="loadstring-box">
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/AlrecTofficial67/FinzuFile_xploTer/refs/heads/main/Laser_H4M4SALON_TEAMPHScommunity.txt", true))()
+        </div>
+
+        <button class="btn-copy" onclick="copyLoadstring()">Salin Url</button>
+        <button class="btn-executor" onclick="tryOpenExecutor()">Buka Executor (Opsional)</button>
+    </div>
+
+    <script>
+        // ================= LOADSTRING ORI YANG DITANAM DI HTML =================
+        const TARGET_LOADSTRING = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/AlrecTofficial67/FinzuFile_xploTer/refs/heads/main/Laser_H4M4SALON_TEAMPHScommunity.txt", true))()';
+
+        // ================= PINDAH KE LAYAR LOGIN =================
+        function showLogin() {
+            document.getElementById('screen-denied').classList.remove('active');
+            document.getElementById('screen-login').classList.add('active');
+        }
+
+        // ================= LOGIN =================
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === "PlerSuki19" && pass === "HelloMyFriends19") {
+                document.getElementById('screen-login').classList.remove('active');
+                document.getElementById('screen-obfuscator').classList.add('active');
+            } else {
+                alert('⛔ ACCESS DITOLAK!\n\nNama atau Sandi salah!');
+            }
+        }
+
+        // ================= SALIN LOADSTRING ORI =================
+        function copyLoadstring() {
+            navigator.clipboard.writeText(TARGET_LOADSTRING).then(() => {
+                alert('✅ BERHASIL DISALIN!\n\nLoadstring Ori telah disalin ke clipboard.\n\nLangkah selanjutnya:\n1. Buka Executor kamu (Delta, Krnl, Synapse, dll)\n2. Paste (Ctrl+V) di kolom script\n3. Klik Execute!');
+
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "✅ TERSALIN!";
+                btn.style.backgroundColor = "var(--success)";
+                btn.style.color = "#000000";
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#ffffff";
+                    btn.style.color = "var(--red)";
+                }, 2000);
+            }).catch(err => {
+                // Fallback jika browser tidak mendukung clipboard API
+                const textArea = document.createElement("textarea");
+                textArea.value = TARGET_LOADSTRING;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+                alert('✅ BERHASIL DISALIN! Silakan paste di executor kamu.');
+            });
+        }
+
+        // ================= BUKA EXECUTOR (OPSIONAL) =================
+        function tryOpenExecutor() {
+            alert('Mencoba membuka Executor...\n\nJika tidak terbuka, berarti executor kamu tidak mendukung fitur ini. Silakan buka manual dan paste kodenya.');
+            window.location.href = "roblox://";
+        }
+    </script>
+</body>
+</html>
